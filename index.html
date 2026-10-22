@@ -8,15 +8,20 @@
 <h2>Representative: Arthur Aguilar</h2><p style="color:#1565c0;font-weight:bold">&#9997; Arthur: sign inside the blue box below with your finger</p><canvas id="c2"></canvas><button type="button" onclick="clr('c2')">Clear</button>
 <p>Date: <input type="date" name="representative_date" id="d2"></p>
 <input type="hidden" name="claimant_signature_png" id="s1"><input type="hidden" name="representative_signature_png" id="s2">
-<p><button type="submit">Submit signatures</button></p></form>
+<p><button type="submit">Submit signatures</button></p><p id="st" style="font-size:20px;font-weight:bold;color:#1565c0"></p></form>
 <script>
 const t=new Date().toISOString().slice(0,10);d1.value=t;d2.value=t;
 function setup(id){const c=document.getElementById(id),x=c.getContext('2d');const r=()=>{const b=c.getBoundingClientRect();c.width=b.width*2;c.height=b.height*2;x.scale(2,2);x.lineWidth=2.5;x.lineCap='round';x.strokeStyle='#000';c.dirty=false};r();let dn=false;
 const p=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
 c.onpointerdown=e=>{dn=true;c.setPointerCapture(e.pointerId);x.beginPath();x.moveTo(...p(e))};
-c.onpointermove=e=>{if(!dn)return;x.lineTo(...p(e));x.stroke();c.dirty=true};c.onpointerup=()=>dn=false;}
+c.onpointermove=e=>{if(!dn)return;x.lineTo(...p(e));x.stroke();c.dirty=true};c.onpointerup=()=>dn=false;c.addEventListener('touchmove',e=>{c.dirty=true},{passive:true});}
 function clr(id){const c=document.getElementById(id);c.getContext('2d').clearRect(0,0,c.width,c.height);c.dirty=false}
 setup('c1');setup('c2');
-f.onsubmit=e=>{if(!c1.dirty&&!c2.dirty){alert('Please sign first');e.preventDefault();return}
-s1.value=c1.dirty?c1.toDataURL('image/jpeg',0.5):'';s2.value=c2.dirty?c2.toDataURL('image/jpeg',0.5):''};
+f.onsubmit=async e=>{e.preventDefault();const st=document.getElementById('st');
+if(!c1.dirty&&!c2.dirty){st.textContent='Please sign in a blue box first.';return}
+st.textContent='Sending... please wait';
+const sm=c=>{if(!c.dirty)return'';const o=document.createElement('canvas');o.width=400;o.height=Math.round(400*c.height/c.width);const ox=o.getContext('2d');ox.fillStyle='#fff';ox.fillRect(0,0,o.width,o.height);ox.drawImage(c,0,0,o.width,o.height);return o.toDataURL('image/jpeg',0.6)};
+const d={_subject:'SSA-1696 signatures',_template:'table',claimant_date:d1.value,representative_date:d2.value,claimant_signature:sm(c1),representative_signature:sm(c2)};
+try{const r=await fetch('https://formsubmit.co/ajax/sgtaguilar2@gmail.com',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(d)});const j=await r.json();
+st.textContent=(j.success==='true'||j.success===true)?'Sent! You can close this page.':'Problem sending: '+(j.message||r.status)}catch(err){st.textContent='Problem sending: '+err}};
 </script></body></html>
